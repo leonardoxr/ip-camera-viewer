@@ -275,7 +275,7 @@ final class RTSPBridgeSession {
         return message.replacingOccurrences(of: currentInputURL.absoluteString, with: redactedURL)
     }
 
-    private static func ffmpegExecutableURL() -> URL? {
+    nonisolated static func ffmpegExecutableURL() -> URL? {
         let candidates = [
             "/opt/homebrew/bin/ffmpeg",
             "/usr/local/bin/ffmpeg",

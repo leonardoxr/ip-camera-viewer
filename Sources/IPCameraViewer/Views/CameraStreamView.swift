@@ -13,6 +13,7 @@ enum CameraStreamMode {
 struct CameraStreamView: View {
     let camera: Camera
     let mode: CameraStreamMode
+    var onAnalysisURLChange: (URL?) -> Void = { _ in }
     @AppStorage(AppPreferenceKey.showPreviewNameBadges) private var showPreviewNameBadges = true
 
     var body: some View {
@@ -27,8 +28,14 @@ struct CameraStreamView: View {
                 switch camera.streamKind {
                 case .web:
                     WebCameraView(url: url)
+                        .onAppear {
+                            onAnalysisURLChange(url)
+                        }
                 case .hls:
                     HLSCameraView(url: url)
+                        .onAppear {
+                            onAnalysisURLChange(url)
+                        }
                 case .rtsp:
                     if mode == .preview {
                         StreamMessageView(
@@ -37,7 +44,12 @@ struct CameraStreamView: View {
                             systemImage: "antenna.radiowaves.left.and.right"
                         )
                     } else {
-                        RTSPBridgeCameraView(url: url, quality: camera.qualityPreset, encodingMode: camera.encodingMode)
+                        RTSPBridgeCameraView(
+                            url: url,
+                            quality: camera.qualityPreset,
+                            encodingMode: camera.encodingMode,
+                            onAnalysisURLChange: onAnalysisURLChange
+                        )
                     }
                 case .unknown:
                     StreamMessageView(
@@ -55,6 +67,9 @@ struct CameraStreamView: View {
             }
         }
         .background(Color.black)
+        .onDisappear {
+            onAnalysisURLChange(nil)
+        }
         .overlay(alignment: .topLeading) {
             if mode == .preview && showPreviewNameBadges {
                 Text(camera.name)
@@ -164,6 +179,7 @@ private struct RTSPBridgeCameraView: View {
     let url: URL
     let quality: StreamQualityPreset
     let encodingMode: StreamEncodingMode
+    let onAnalysisURLChange: (URL?) -> Void
     @State private var bridge = RTSPBridgeSession()
 
     var body: some View {
@@ -192,10 +208,18 @@ private struct RTSPBridgeCameraView: View {
                 )
             }
         }
+        .onChange(of: bridge.state) { _, state in
+            if case .streaming(let playlistURL) = state {
+                onAnalysisURLChange(playlistURL)
+            } else {
+                onAnalysisURLChange(nil)
+            }
+        }
         .task(id: "\(url.absoluteString)-\(quality.rawValue)-\(encodingMode.rawValue)") {
             bridge.start(inputURL: url, quality: quality, encodingMode: encodingMode)
         }
         .onDisappear {
+            onAnalysisURLChange(nil)
             bridge.stop()
         }
     }
