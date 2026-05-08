@@ -13,7 +13,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "IPCameraViewer",
-            path: "Sources/IPCameraViewer"
+            path: "Sources/IPCameraViewer",
+            resources: [
+                .process("Resources")
+            ]
         )
     ]
 )
