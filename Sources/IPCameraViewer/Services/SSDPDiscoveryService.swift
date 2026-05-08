@@ -146,7 +146,10 @@ struct SSDPDiscoveryService {
                     return nil
                 }
 
-                return String(cString: hostBuffer)
+                let hostBytes = hostBuffer
+                    .prefix { $0 != 0 }
+                    .map { UInt8(bitPattern: $0) }
+                return String(decoding: hostBytes, as: UTF8.self)
             }
         }
     }

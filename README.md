@@ -21,7 +21,7 @@ It is built with SwiftUI and Swift Package Manager. The app is designed for loca
 ## Requirements
 
 - macOS 14 or newer.
-- Swift 5.9 or newer.
+- Swift 6.2 or newer.
 - Xcode Command Line Tools.
 - `ffmpeg` for RTSP playback, transcoding, and view casting.
 
