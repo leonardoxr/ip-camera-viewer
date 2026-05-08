@@ -15,8 +15,7 @@ struct BonjourDiscoveryService {
     }
 }
 
-@MainActor
-private final class BonjourDiscoverySession: NSObject, @preconcurrency NetServiceBrowserDelegate, @preconcurrency NetServiceDelegate {
+private final class BonjourDiscoverySession: NSObject, NetServiceBrowserDelegate, NetServiceDelegate, @unchecked Sendable {
     private let timeout: TimeInterval
     private let completion: (BonjourDiscoverySession, [DiscoveredCamera]) -> Void
     private var browsers: [NetServiceBrowser] = []
