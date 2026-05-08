@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct CameraViewFormView: View {
     @Environment(\.dismiss) private var dismiss
 
@@ -158,6 +159,7 @@ struct CameraViewFormView: View {
     }
 }
 
+@MainActor
 private struct SelectedCameraRow: View {
     let camera: Camera
     let canMoveUp: Bool

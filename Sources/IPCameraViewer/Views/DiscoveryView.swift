@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct DiscoveryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(CameraStore.self) private var store
@@ -183,6 +184,7 @@ final class DiscoveryViewModel {
     }
 }
 
+@MainActor
 private struct DiscoveredCameraRow: View {
     let camera: DiscoveredCamera
     let isAdded: Bool

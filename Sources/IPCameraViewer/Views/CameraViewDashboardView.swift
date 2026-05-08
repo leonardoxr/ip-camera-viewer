@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct CameraViewDashboardView: View {
     let cameraView: CameraViewLayout
     let cameras: [Camera]
@@ -137,6 +138,7 @@ struct CameraViewDashboardView: View {
     }
 }
 
+@MainActor
 private struct CompositeViewCastView: View {
     let cameraView: CameraViewLayout
     let cameras: [Camera]
@@ -220,19 +222,20 @@ private struct WindowMinimumSizeReader: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSView {
         let view = NSView(frame: .zero)
-        DispatchQueue.main.async {
+        Task { @MainActor in
             WindowMinimumSizeCoordinator.apply(minSize: minSize, fallbackMinSize: fallbackMinSize, from: view)
         }
         return view
     }
 
     func updateNSView(_ view: NSView, context: Context) {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             WindowMinimumSizeCoordinator.apply(minSize: minSize, fallbackMinSize: fallbackMinSize, from: view)
         }
     }
 }
 
+@MainActor
 enum WindowMinimumSizeCoordinator {
     private static weak var currentWindow: NSWindow?
     private static var fallbackMinSize = CGSize(width: 980, height: 620)
@@ -275,6 +278,7 @@ enum WindowMinimumSizeCoordinator {
     }
 }
 
+@MainActor
 private struct CameraViewStreamTile: View {
     let camera: Camera
     let onSelect: () -> Void

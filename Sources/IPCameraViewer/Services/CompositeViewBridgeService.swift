@@ -86,22 +86,23 @@ final class CompositeViewBridgeSession {
 
             let errorPipe = Pipe()
             process.standardError = errorPipe
-            errorPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
+            let session = self
+            errorPipe.fileHandleForReading.readabilityHandler = { [weak session] handle in
                 let data = handle.availableData
                 guard !data.isEmpty,
                       let message = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
                       !message.isEmpty else {
                     return
                 }
-                Task { @MainActor in
-                    self?.recordBridgeError(message)
+                Task { @MainActor [weak session] in
+                    session?.recordBridgeError(message)
                 }
             }
 
-            process.terminationHandler = { [weak self, weak errorPipe] process in
+            process.terminationHandler = { [weak session, weak errorPipe] process in
                 errorPipe?.fileHandleForReading.readabilityHandler = nil
-                Task { @MainActor in
-                    self?.processDidTerminate(process)
+                Task { @MainActor [weak session] in
+                    session?.processDidTerminate(process)
                 }
             }
 

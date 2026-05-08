@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct CameraGridView: View {
     let cameras: [Camera]
     @Binding var searchText: String
@@ -127,6 +128,7 @@ struct CameraGridView: View {
     }
 }
 
+@MainActor
 private struct CameraPreviewTile: View {
     let camera: Camera
     let onSelect: () -> Void
@@ -179,6 +181,7 @@ private struct CameraPreviewTile: View {
     }
 }
 
+@MainActor
 private struct CameraGroupSection: View {
     let title: String
     let cameras: [Camera]
@@ -212,6 +215,7 @@ private struct CameraGroup {
     let cameras: [Camera]
 }
 
+@MainActor
 private struct EmptyCameraState: View {
     @Environment(CameraStore.self) private var store
     @Environment(DiscoveryStore.self) private var discoveryStore

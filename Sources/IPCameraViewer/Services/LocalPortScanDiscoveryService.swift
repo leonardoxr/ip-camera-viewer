@@ -16,8 +16,7 @@ struct LocalPortScanDiscoveryService {
         let deadline = Date().addingTimeInterval(timeout)
         let queue = DispatchQueue(label: "CameraPortScan", attributes: .concurrent)
         let group = DispatchGroup()
-        let lock = NSLock()
-        var discoveredByHost: [String: DiscoveredCamera] = [:]
+        let accumulator = DiscoveredCameraAccumulator()
 
         for host in hosts.prefix(512) {
             guard Date() < deadline else { break }
@@ -35,14 +34,12 @@ struct LocalPortScanDiscoveryService {
                 }
 
                 guard let bestCamera else { return }
-                lock.lock()
-                discoveredByHost[host] = preferred(discoveredByHost[host], bestCamera)
-                lock.unlock()
+                accumulator.merge(camera: bestCamera, for: host)
             }
         }
 
         _ = group.wait(timeout: .now() + timeout + 1)
-        return Array(discoveredByHost.values)
+        return accumulator.values
     }
 
     private static func camera(host: String, port: Int) -> DiscoveredCamera? {
@@ -88,7 +85,7 @@ struct LocalPortScanDiscoveryService {
         return LocalPortProbe.canConnect(to: host, port: port, timeout: timeout)
     }
 
-    private static func preferred(_ existing: DiscoveredCamera?, _ candidate: DiscoveredCamera) -> DiscoveredCamera {
+    fileprivate static func preferred(_ existing: DiscoveredCamera?, _ candidate: DiscoveredCamera) -> DiscoveredCamera {
         guard let existing else { return candidate }
 
         let rank = [554: 0, 8554: 1, 80: 2, 443: 3, 8080: 4, 8081: 5, 37777: 6]
@@ -171,6 +168,23 @@ struct LocalPortScanDiscoveryService {
         return ranges
     }
 
+}
+
+private final class DiscoveredCameraAccumulator: @unchecked Sendable {
+    private let lock = NSLock()
+    private var discoveredByHost: [String: DiscoveredCamera] = [:]
+
+    var values: [DiscoveredCamera] {
+        lock.lock()
+        defer { lock.unlock() }
+        return Array(discoveredByHost.values)
+    }
+
+    func merge(camera: DiscoveredCamera, for host: String) {
+        lock.lock()
+        discoveredByHost[host] = LocalPortScanDiscoveryService.preferred(discoveredByHost[host], camera)
+        lock.unlock()
+    }
 }
 
 private let cameraFingerprints = [

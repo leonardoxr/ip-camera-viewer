@@ -9,6 +9,7 @@ enum CameraStreamMode {
     case full
 }
 
+@MainActor
 struct CameraStreamView: View {
     let camera: Camera
     let mode: CameraStreamMode
@@ -113,6 +114,7 @@ struct WebCameraView: NSViewRepresentable {
     }
 }
 
+@MainActor
 struct HLSCameraView: View {
     let url: URL
     @State private var player: AVPlayer
@@ -157,6 +159,7 @@ private struct AVPlayerCameraView: NSViewRepresentable {
     }
 }
 
+@MainActor
 private struct RTSPBridgeCameraView: View {
     let url: URL
     let quality: StreamQualityPreset
@@ -198,6 +201,7 @@ private struct RTSPBridgeCameraView: View {
     }
 }
 
+@MainActor
 struct StreamMessageView: View {
     let title: String
     let message: String

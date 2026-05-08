@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct CameraDetailView: View {
     let camera: Camera
     let onEdit: () -> Void
@@ -76,6 +77,7 @@ struct CameraDetailView: View {
     }
 }
 
+@MainActor
 private struct PTZControlPanel: View {
     let camera: Camera
     let model: PTZControlModel
@@ -102,6 +104,7 @@ private struct PTZControlPanel: View {
     }
 }
 
+@MainActor
 private struct PTZStatusView: View {
     let status: String
 
@@ -119,6 +122,7 @@ private struct PTZStatusView: View {
     }
 }
 
+@MainActor
 private struct PTZHoldButton: View {
     let systemImage: String
     let command: PTZCommand

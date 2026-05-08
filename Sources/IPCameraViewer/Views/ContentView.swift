@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct ContentView: View {
     @Environment(CameraStore.self) private var store
     @Environment(DiscoveryStore.self) private var discoveryStore

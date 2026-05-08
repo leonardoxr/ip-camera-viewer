@@ -4,7 +4,7 @@ import Security
 enum CameraCredentialStore {
     private static let service = "IPCameraViewer.CameraCredentials.v2"
     private static let lock = NSLock()
-    private static var cachedPasswords: [Camera.ID: String] = [:]
+    private nonisolated(unsafe) static var cachedPasswords: [Camera.ID: String] = [:]
 
     static func password(for cameraID: Camera.ID) -> String {
         lock.lock()

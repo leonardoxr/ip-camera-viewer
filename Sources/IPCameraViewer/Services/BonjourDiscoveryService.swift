@@ -15,7 +15,8 @@ struct BonjourDiscoveryService {
     }
 }
 
-private final class BonjourDiscoverySession: NSObject, NetServiceBrowserDelegate, NetServiceDelegate {
+@MainActor
+private final class BonjourDiscoverySession: NSObject, @preconcurrency NetServiceBrowserDelegate, @preconcurrency NetServiceDelegate {
     private let timeout: TimeInterval
     private let completion: (BonjourDiscoverySession, [DiscoveredCamera]) -> Void
     private var browsers: [NetServiceBrowser] = []
@@ -43,8 +44,10 @@ private final class BonjourDiscoverySession: NSObject, NetServiceBrowserDelegate
             return browser
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in
-            self?.finish()
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+            self.finish()
         }
     }
 

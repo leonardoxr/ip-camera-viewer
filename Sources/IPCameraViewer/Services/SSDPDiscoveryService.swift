@@ -108,7 +108,7 @@ struct SSDPDiscoveryService {
             headers["usn"],
             headers["x-user-agent"]
         ]
-        .compactMap(\.self)
+        .compactMap { $0 }
         .joined(separator: " ")
         .lowercased()
 

@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct CameraViewsManagerView: View {
     let cameraViews: [CameraViewLayout]
     let cameras: [Camera]
@@ -72,6 +73,7 @@ struct CameraViewsManagerView: View {
     }
 }
 
+@MainActor
 private struct CameraViewSummaryTile: View {
     let cameraView: CameraViewLayout
     let cameras: [Camera]

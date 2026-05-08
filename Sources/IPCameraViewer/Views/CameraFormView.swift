@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct CameraFormView: View {
     @Environment(\.dismiss) private var dismiss
 

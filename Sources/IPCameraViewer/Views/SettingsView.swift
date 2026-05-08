@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct SettingsView: View {
     @AppStorage(AppPreferenceKey.autoScanOnLaunch) private var autoScanOnLaunch = true
     @AppStorage(AppPreferenceKey.groupCamerasByLocation) private var groupCamerasByLocation = true

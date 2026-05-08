@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct SidebarView: View {
     @Environment(CameraStore.self) private var store
     @Binding var selection: SidebarSelection
@@ -87,6 +88,7 @@ struct SidebarView: View {
     }
 }
 
+@MainActor
 private struct CameraSidebarRow: View {
     let camera: Camera
 
@@ -109,6 +111,7 @@ private struct CameraSidebarRow: View {
     }
 }
 
+@MainActor
 private struct CameraViewSidebarRow: View {
     let cameraView: CameraViewLayout
     let camerasCount: Int
