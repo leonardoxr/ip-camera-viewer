@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag, for example v0.1.0 or v0.1.0-beta.1"
+        required: true
+        type: string
+      prerelease:
+        description: "Mark this release as a prerelease"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build Release
+    runs-on: macos-14
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Resolve release metadata
+        id: metadata
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            tag_name="${{ inputs.tag_name }}"
+            prerelease="${{ inputs.prerelease }}"
+          else
+            tag_name="${GITHUB_REF_NAME}"
+            prerelease="false"
+            if [[ "$tag_name" =~ (alpha|beta|rc|pre|preview|wip) ]]; then
+              prerelease="true"
+            fi
+          fi
+
+          echo "tag_name=$tag_name" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+
+      - name: Build app bundle
+        run: ./script/build_and_run.sh --package
+
+      - name: Archive app bundle
+        shell: bash
+        run: |
+          ditto -c -k --keepParent "dist/IPCameraViewer.app" "dist/IPCameraViewer-macOS.zip"
+          shasum -a 256 "dist/IPCameraViewer-macOS.zip" > "dist/IPCameraViewer-macOS.zip.sha256"
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.metadata.outputs.tag_name }}
+          name: IP Camera Viewer ${{ steps.metadata.outputs.tag_name }}
+          prerelease: ${{ steps.metadata.outputs.prerelease }}
+          generate_release_notes: true
+          files: |
+            dist/IPCameraViewer-macOS.zip
+            dist/IPCameraViewer-macOS.zip.sha256

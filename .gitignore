@@ -1,0 +1,24 @@
+.DS_Store
+.build/
+dist/
+.swiftpm/
+.codex/
+
+# Xcode and local macOS state
+DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.moved-aside
+
+# Logs and runtime output
+*.log
+*.trace
+*.tmp
+
+# Local app data exports or diagnostic captures
+cameras.json
+camera-views.json
+*.har
+*.pcap
+*.pcapng

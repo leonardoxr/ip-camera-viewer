@@ -1,0 +1,51 @@
+name: WIP Prerelease
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wip-prerelease
+  cancel-in-progress: true
+
+jobs:
+  wip-prerelease:
+    name: Build Rolling WIP Prerelease
+    runs-on: macos-14
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build app bundle
+        run: ./script/build_and_run.sh --package
+
+      - name: Archive app bundle
+        shell: bash
+        run: |
+          ditto -c -k --keepParent "dist/IPCameraViewer.app" "dist/IPCameraViewer-WIP-macOS.zip"
+          shasum -a 256 "dist/IPCameraViewer-WIP-macOS.zip" > "dist/IPCameraViewer-WIP-macOS.zip.sha256"
+
+      - name: Publish rolling prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: wip-latest
+        shell: bash
+        run: |
+          gh release delete "$TAG_NAME" --yes --cleanup-tag >/dev/null 2>&1 || true
+          git tag --force "$TAG_NAME" "$GITHUB_SHA"
+          git push origin --force "refs/tags/$TAG_NAME"
+          gh release create "$TAG_NAME" \
+            "dist/IPCameraViewer-WIP-macOS.zip" \
+            "dist/IPCameraViewer-WIP-macOS.zip.sha256" \
+            --target "$GITHUB_SHA" \
+            --title "IP Camera Viewer WIP" \
+            --notes "Rolling prerelease build from main at commit $GITHUB_SHA. This release is replaced on each push to main." \
+            --prerelease
