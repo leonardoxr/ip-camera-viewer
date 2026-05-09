@@ -73,7 +73,8 @@ final class CompositeViewBridgeSession {
         do {
             try FileManager.default.removeCompositeItemIfExists(at: directory)
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            let httpURL = try startHTTPServer(serving: directory)
+            let server = try LocalHLSHTTPServer.start(serving: directory, logPrefix: "Started composite")
+            httpServerProcess = server.process
 
             let process = Process()
             process.executableURL = ffmpegURL
@@ -109,7 +110,7 @@ final class CompositeViewBridgeSession {
             try process.run()
             self.process = process
             AppLoggers.streams.info("Started composite view bridge with \(inputs.count, privacy: .public) input(s)")
-            waitForPlaylist(at: playlistURL, playbackURL: httpURL.appending(path: "stream.m3u8"))
+            waitForPlaylist(at: playlistURL, playbackURL: server.baseURL.appending(path: "stream.m3u8"))
         } catch {
             AppLoggers.streams.error("Failed to start composite view bridge: \(error.localizedDescription, privacy: .public)")
             state = .failed(error.localizedDescription)
@@ -278,26 +279,6 @@ final class CompositeViewBridgeSession {
 
             self?.state = .failed(self?.failureMessage(prefix: "The composite view bridge started, but no HLS playlist was produced.") ?? "The composite view bridge did not produce video.")
         }
-    }
-
-    private func startHTTPServer(serving directory: URL) throws -> URL {
-        let port = try Self.availableLocalPort()
-        let process = Process()
-        process.executableURL = URL(filePath: "/usr/bin/python3")
-        process.arguments = [
-            "-m", "http.server",
-            "\(port)",
-            "--bind", "127.0.0.1",
-            "--directory", directory.path
-        ]
-
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = pipe
-        try process.run()
-        httpServerProcess = process
-        AppLoggers.streams.info("Started composite HLS server on port \(port, privacy: .public)")
-        return URL(string: "http://127.0.0.1:\(port)")!
     }
 
     private func processDidTerminate(_ terminatedProcess: Process) {
@@ -502,44 +483,6 @@ final class CompositeViewBridgeSession {
             .appending(path: "CompositeBridge-\(id)-\(UUID().uuidString)", directoryHint: .isDirectory)
     }
 
-    private static func availableLocalPort() throws -> Int {
-        let socketDescriptor = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
-        guard socketDescriptor >= 0 else {
-            throw POSIXError(.EIO)
-        }
-        defer { close(socketDescriptor) }
-
-        var reuse: Int32 = 1
-        setsockopt(socketDescriptor, SOL_SOCKET, SO_REUSEADDR, &reuse, socklen_t(MemoryLayout.size(ofValue: reuse)))
-
-        var address = sockaddr_in()
-        address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
-        address.sin_family = sa_family_t(AF_INET)
-        address.sin_port = 0
-        address.sin_addr = in_addr(s_addr: inet_addr("127.0.0.1"))
-
-        let bindResult = withUnsafePointer(to: &address) { pointer in
-            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) { socketAddress in
-                bind(socketDescriptor, socketAddress, socklen_t(MemoryLayout<sockaddr_in>.size))
-            }
-        }
-        guard bindResult == 0 else {
-            throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
-        }
-
-        var socketAddress = sockaddr_in()
-        var socketAddressLength = socklen_t(MemoryLayout<sockaddr_in>.size)
-        let nameResult = withUnsafeMutablePointer(to: &socketAddress) { pointer in
-            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) { reboundPointer in
-                getsockname(socketDescriptor, reboundPointer, &socketAddressLength)
-            }
-        }
-        guard nameResult == 0 else {
-            throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
-        }
-
-        return Int(UInt16(bigEndian: socketAddress.sin_port))
-    }
 }
 
 private struct CompositeInput {
